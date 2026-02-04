@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>إدارة Trickster</title>
+    <title>إدارة Trickster - Firebase</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Almarai:wght@400;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -15,27 +15,27 @@
         .tab-btn.active { background: #f37021; font-weight: bold; color: white; }
         .section { display: none; }
         .section.active { display: block; }
-        .status-badge { font-size: 10px; padding: 2px 8px; rounded: 20px; }
     </style>
 </head>
 <body class="p-6">
+
     <div id="login-screen" class="max-w-md mx-auto mt-20 text-center">
         <h2 class="text-2xl font-black mb-6 text-orange-500">لوحة التحكم</h2>
         <input type="password" id="admin-pass" placeholder="كلمة المرور">
-        <button onclick="login()" class="w-full bg-orange-600 py-3 rounded-xl font-bold">دخول</button>
+        <button id="login-btn" class="w-full bg-orange-600 py-3 rounded-xl font-bold">دخول</button>
         <a href="index.html" class="block mt-6 text-zinc-500 underline text-sm">رجوع للرئيسية</a>
     </div>
 
     <div id="admin-panel" class="hidden max-w-4xl mx-auto">
         <div class="flex justify-between items-center mb-8">
             <h1 class="text-2xl font-black text-orange-500">لوحة التحكم</h1>
-            <a href="index.html" class="bg-red-900/20 text-red-500 px-4 py-2 rounded-xl text-xs font-bold border border-red-900/30">خروج</a>
+            <a href="admin.html" class="bg-red-900/20 text-red-500 px-4 py-2 rounded-xl text-xs font-bold border border-red-900/30">خروج</a>
         </div>
 
         <div class="flex gap-2 mb-8">
-            <button onclick="showTab('rules-tab')" id="btn-rules-tab" class="tab-btn active">القوانين</button>
-            <button onclick="showTab('forms-tab')" id="btn-forms-tab" class="tab-btn">النماذج</button>
-            <button onclick="showTab('subs-tab')" id="btn-subs-tab" class="tab-btn">الطلبات</button>
+            <button id="btn-rules-tab" class="tab-btn active">القوانين</button>
+            <button id="btn-forms-tab" class="tab-btn">النماذج</button>
+            <button id="btn-subs-tab" class="tab-btn">الطلبات</button>
         </div>
 
         <div id="rules-tab" class="section active">
@@ -44,20 +44,19 @@
                 <input type="hidden" id="edit-rule-id">
                 <input type="text" id="rule-title" placeholder="عنوان القانون">
                 <textarea id="rule-desc" placeholder="شرح القانون..." class="h-24 bg-black border border-zinc-800 p-3 w-full rounded-xl text-white outline-none mb-2"></textarea>
-                <button onclick="saveRule()" id="rule-save-btn" class="w-full bg-orange-600 py-3 rounded-xl font-bold">إضافة القانون</button>
+                <button id="save-rule-btn" class="w-full bg-orange-600 py-3 rounded-xl font-bold">إضافة القانون</button>
             </div>
-            <div id="rules-list" class="space-y-3"></div>
+            <div id="rules-list" class="space-y-3">جاري التحميل...</div>
         </div>
 
         <div id="forms-tab" class="section">
             <div class="admin-card mb-6">
-                <h3 class="font-bold mb-4" id="form-header-title">إنشاء نموذج تقديم</h3>
-                <input type="hidden" id="edit-form-id">
-                <input type="text" id="form-name" placeholder="اسم التقديم (مثلاً: تفعيل)">
-                <input type="text" id="form-desc" placeholder="وصف التقديم (مثلاً: حياك الله معنا)">
+                <h3 class="font-bold mb-4">إنشاء نموذج تقديم</h3>
+                <input type="text" id="form-name" placeholder="اسم التقديم">
+                <input type="text" id="form-desc" placeholder="وصف التقديم">
                 <div id="q-container" class="space-y-2 mb-4"></div>
-                <button onclick="addQField()" class="text-xs text-orange-500 font-bold mb-4">+ إضافة سؤال</button>
-                <button onclick="saveForm()" id="form-save-btn" class="w-full bg-orange-600 py-3 rounded-xl font-bold">حفظ النموذج</button>
+                <button id="add-q-btn" class="text-xs text-orange-500 font-bold mb-4">+ إضافة سؤال</button>
+                <button id="save-form-btn" class="w-full bg-orange-600 py-3 rounded-xl font-bold">حفظ النموذج</button>
             </div>
             <div id="forms-list" class="space-y-3"></div>
         </div>
@@ -68,82 +67,81 @@
         </div>
     </div>
 
-    <script>
-        // نظام الدخول
-        function login() {
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // --- ضع بياناتك هنا ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyAHyIOzxwKHiEWwKFYcSvBRSAUkAgo5vWU",
+            authDomain: "trickster-21842.firebaseapp.com",
+            projectId: "trickster-21842",
+            storageBucket: "trickster-21842.firebasestorage.app",
+            messagingSenderId: "510076861931",
+            appId: "1:510076861931:web:b29ec56d0c518c1da32dae"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // --- نظام الدخول ---
+        window.login = () => {
             if(document.getElementById('admin-pass').value === 'aassdd112233rte') {
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('admin-panel').classList.remove('hidden');
                 renderAll();
-            }
-        }
+            } else { alert("كلمة المرور خطأ!"); }
+        };
+        document.getElementById('login-btn').onclick = login;
 
-        function showTab(id) {
+        // --- التبديل بين التبويبات ---
+        window.showTab = (id) => {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active', 'white'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(id).classList.add('active');
             document.getElementById('btn-'+id).classList.add('active');
-        }
+        };
+        document.getElementById('btn-rules-tab').onclick = () => showTab('rules-tab');
+        document.getElementById('btn-forms-tab').onclick = () => showTab('forms-tab');
+        document.getElementById('btn-subs-tab').onclick = () => showTab('subs-tab');
 
-        // --- إدارة القوانين ---
-        function saveRule() {
+        // --- إدارة القوانين (Firebase) ---
+        async function saveRule() {
             const title = document.getElementById('rule-title').value;
             const desc = document.getElementById('rule-desc').value;
-            const editId = document.getElementById('edit-rule-id').value;
             if(!title || !desc) return;
 
-            let rules = JSON.parse(localStorage.getItem('trickster_rules')) || [];
-            if(editId !== "") {
-                rules[editId] = { ...rules[editId], title, desc };
-            } else {
-                rules.push({ title, desc, status: 'نشط' });
+            try {
+                await addDoc(collection(db, "rules"), { title, desc, date: Date.now() });
+                document.getElementById('rule-title').value = "";
+                document.getElementById('rule-desc').value = "";
+                renderAll();
+            } catch (e) { console.error("Error: ", e); }
+        }
+        document.getElementById('save-rule-btn').onclick = saveRule;
+
+        window.deleteRule = async (id) => {
+            if(confirm("هل تريد حذف هذا القانون؟")) {
+                await deleteDoc(doc(db, "rules", id));
+                renderAll();
             }
+        };
 
-            localStorage.setItem('trickster_rules', JSON.stringify(rules));
-            resetRuleForm();
-            renderAll();
-        }
-
-        function editRule(i) {
-            const rules = JSON.parse(localStorage.getItem('trickster_rules'));
-            document.getElementById('edit-rule-id').value = i;
-            document.getElementById('rule-title').value = rules[i].title;
-            document.getElementById('rule-desc').value = rules[i].desc;
-            document.getElementById('rule-form-title').innerText = "تعديل القانون";
-            document.getElementById('rule-save-btn').innerText = "تحديث القانون";
-            showTab('rules-tab');
-        }
-
-        function deleteRule(i) {
-            let rules = JSON.parse(localStorage.getItem('trickster_rules'));
-            rules.splice(i, 1);
-            localStorage.setItem('trickster_rules', JSON.stringify(rules));
-            renderAll();
-        }
-
-        function resetRuleForm() {
-            document.getElementById('edit-rule-id').value = "";
-            document.getElementById('rule-title').value = "";
-            document.getElementById('rule-desc').value = "";
-            document.getElementById('rule-form-title').innerText = "إضافة قانون جديد";
-            document.getElementById('rule-save-btn').innerText = "إضافة القانون";
-        }
-
-        // --- إدارة النماذج ---
-        function addQField(val = "", type = "text") {
+        // --- إدارة النماذج (Firebase) ---
+        window.addQField = (val = "", type = "text") => {
             const div = document.createElement('div');
             div.className = "flex gap-2";
             div.innerHTML = `
                 <input type="text" class="q-text" placeholder="السؤال" value="${val}">
-                <select class="q-type w-32"><option value="text" ${type==='text'?'selected':''}>نص</option><option value="bool" ${type==='bool'?'selected':''}>نعم/لا</option></select>
-                <button onclick="this.parentElement.remove()" class="text-red-500"><i class="fas fa-trash"></i></button>`;
+                <select class="q-type w-32"><option value="text">نص</option><option value="bool">نعم/لا</option></select>
+                <button onclick="this.parentElement.remove()" class="text-red-500 mb-2"><i class="fas fa-trash"></i></button>`;
             document.getElementById('q-container').appendChild(div);
-        }
+        };
+        document.getElementById('add-q-btn').onclick = () => addQField();
 
-        function saveForm() {
+        async function saveForm() {
             const name = document.getElementById('form-name').value;
             const desc = document.getElementById('form-desc').value;
-            const editId = document.getElementById('edit-form-id').value;
             const qTexts = document.querySelectorAll('.q-text');
             const qTypes = document.querySelectorAll('.q-type');
             
@@ -151,109 +149,59 @@
             qTexts.forEach((q, i) => { if(q.value) questions.push({ text: q.value, type: qTypes[i].value }); });
 
             if(!name || questions.length === 0) return;
-            let forms = JSON.parse(localStorage.getItem('trickster_forms')) || [];
             
-            if(editId !== "") {
-                const idx = forms.findIndex(f => f.id == editId);
-                forms[idx] = { ...forms[idx], name, description: desc, questions };
-            } else {
-                forms.push({ id: Date.now(), name, description: desc, status: 'مفتوح', questions });
-            }
-            
-            localStorage.setItem('trickster_forms', JSON.stringify(forms));
-            resetFormEditor();
-            renderAll();
-        }
-
-        function editForm(id) {
-            const forms = JSON.parse(localStorage.getItem('trickster_forms'));
-            const f = forms.find(x => x.id == id);
-            document.getElementById('edit-form-id').value = id;
-            document.getElementById('form-name').value = f.name;
-            document.getElementById('form-desc').value = f.description;
-            document.getElementById('q-container').innerHTML = "";
-            f.questions.forEach(q => addQField(q.text, q.type));
-            document.getElementById('form-header-title').innerText = "تعديل النموذج";
-            document.getElementById('form-save-btn').innerText = "تحديث النموذج";
-            showTab('forms-tab');
-        }
-
-        function toggleFormStatus(id) {
-            let forms = JSON.parse(localStorage.getItem('trickster_forms'));
-            const idx = forms.findIndex(f => f.id == id);
-            forms[idx].status = forms[idx].status === 'مفتوح' ? 'مغلق' : 'مفتوح';
-            localStorage.setItem('trickster_forms', JSON.stringify(forms));
-            renderAll();
-        }
-
-        function deleteForm(id) {
-            let forms = JSON.parse(localStorage.getItem('trickster_forms'));
-            forms = forms.filter(f => f.id != id);
-            localStorage.setItem('trickster_forms', JSON.stringify(forms));
-            renderAll();
-        }
-
-        function resetFormEditor() {
-            document.getElementById('edit-form-id').value = "";
+            await addDoc(collection(db, "forms"), { name, description: desc, status: 'مفتوح', questions });
             document.getElementById('form-name').value = "";
-            document.getElementById('form-desc').value = "";
             document.getElementById('q-container').innerHTML = "";
-            document.getElementById('form-header-title').innerText = "إنشاء نموذج تقديم";
-            document.getElementById('form-save-btn').innerText = "حفظ النموذج";
+            renderAll();
         }
+        document.getElementById('save-form-btn').onclick = saveForm;
 
-        function renderAll() {
-            const rules = JSON.parse(localStorage.getItem('trickster_rules')) || [];
-            const forms = JSON.parse(localStorage.getItem('trickster_forms')) || [];
-            const subs = JSON.parse(localStorage.getItem('trickster_subs')) || [];
+        window.deleteForm = async (id) => {
+            await deleteDoc(doc(db, "forms", id));
+            renderAll();
+        };
 
-            // رندر القوانين
-            document.getElementById('rules-list').innerHTML = rules.map((r, i) => `
+        // --- جلب وعرض البيانات (Render) ---
+        async function renderAll() {
+            // جلب القوانين
+            const rulesSnap = await getDocs(collection(db, "rules"));
+            document.getElementById('rules-list').innerHTML = rulesSnap.docs.map(doc => `
                 <div class="admin-card flex justify-between items-center py-3">
-                    <span class="font-bold">${r.title}</span>
-                    <div class="flex gap-4">
-                        <button onclick="editRule(${i})" class="text-zinc-500 hover:text-white"><i class="fas fa-bars"></i></button>
-                        <button onclick="deleteRule(${i})" class="text-red-500"><i class="fas fa-trash"></i></button>
-                    </div>
+                    <span class="font-bold">${doc.data().title}</span>
+                    <button onclick="deleteRule('${doc.id}')" class="text-red-500"><i class="fas fa-trash"></i></button>
                 </div>`).join('');
 
-            // رندر النماذج
-            document.getElementById('forms-list').innerHTML = forms.map(f => `
+            // جلب النماذج
+            const formsSnap = await getDocs(collection(db, "forms"));
+            document.getElementById('forms-list').innerHTML = formsSnap.docs.map(d => `
                 <div class="admin-card flex justify-between items-center py-3">
-                    <div>
-                        <span class="font-bold ml-2">${f.name}</span>
-                        <span class="status-badge ${f.status==='مفتوح'?'bg-green-900 text-green-400':'bg-red-900 text-red-400'} rounded-full px-2">${f.status}</span>
-                    </div>
-                    <div class="flex gap-4">
-                        <button onclick="toggleFormStatus(${f.id})" title="قفل/فتح" class="text-zinc-500 hover:text-orange-500"><i class="fas fa-lock${f.status==='مغلق'?'':'-open'}"></i></button>
-                        <button onclick="editForm(${f.id})" class="text-zinc-500 hover:text-white"><i class="fas fa-bars"></i></button>
-                        <button onclick="deleteForm(${f.id})" class="text-red-500"><i class="fas fa-trash"></i></button>
-                    </div>
+                    <span>${d.data().name}</span>
+                    <button onclick="deleteForm('${d.id}')" class="text-red-500"><i class="fas fa-trash"></i></button>
                 </div>`).join('');
 
-            // رندر الطلبات
-            document.getElementById('subs-list').innerHTML = subs.length ? subs.map((s, i) => `
+            // جلب الطلبات (Submissions)
+            const subsSnap = await getDocs(collection(db, "submissions"));
+            document.getElementById('subs-list').innerHTML = subsSnap.docs.map(d => {
+                const s = d.data();
+                return `
                 <div class="admin-card border-orange-900/30">
                     <div class="flex justify-between mb-3 border-b border-zinc-800 pb-2">
                         <span class="text-orange-500 font-bold">${s.formName}</span>
-                        <button onclick="deleteSub(${i})" class="text-red-500 text-xs"><i class="fas fa-times ml-1"></i>حذف</button>
+                        <button onclick="deleteSub('${d.id}')" class="text-red-500 text-xs"><i class="fas fa-times ml-1"></i>حذف</button>
                     </div>
                     <div class="text-sm space-y-1 text-zinc-300">
                         <p><span class="text-zinc-500">روبلوكس:</span> ${s.roblox}</p>
                         <p><span class="text-zinc-500">ديسكورد:</span> ${s.discord}</p>
-                        <hr class="border-zinc-800 my-2">
-                        ${s.responses.map(res => `<p><span class="text-zinc-400">${res.question}:</span> ${res.answer}</p>`).join('')}
                     </div>
-                </div>`).join('') : '<p class="text-center text-zinc-600">لا يوجد طلبات حالياً</p>';
+                </div>`;
+            }).join('') || '<p class="text-center text-zinc-600">لا يوجد طلبات</p>';
         }
 
-        function deleteSub(i) {
-            let subs = JSON.parse(localStorage.getItem('trickster_subs'));
-            subs.splice(i, 1);
-            localStorage.setItem('trickster_subs', JSON.stringify(subs));
+        window.deleteSub = async (id) => {
+            await deleteDoc(doc(db, "submissions", id));
             renderAll();
-        }
+        };
     </script>
 </body>
 </html>
-                  
