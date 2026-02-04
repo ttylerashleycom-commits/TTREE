@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trickster - التقديم</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Almarai:wght@400;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -14,60 +15,84 @@
 <body class="p-6">
     <div class="max-w-2xl mx-auto">
         <div class="flex justify-between items-center mb-10">
-            <h1 class="text-3xl font-black">التقديم</h1>
+            <h1 class="text-3xl font-black text-orange-500">التقديمات</h1>
             <a href="index.html" class="text-zinc-500 bg-zinc-900 px-4 py-2 rounded-xl text-sm">رجوع</a>
         </div>
-        <div id="forms-container" class="space-y-6"></div>
+        <div id="forms-container" class="space-y-6">جاري تحميل الوظائف المتاحة...</div>
     </div>
 
     <div id="apply-overlay" class="fixed inset-0 bg-black/95 hidden flex items-center justify-center p-4 z-[200]">
-        <div class="bg-[#111] w-full max-w-lg p-8 rounded-3xl border border-zinc-800 my-auto shadow-2xl">
+        <div class="bg-[#111] w-full max-w-lg p-8 rounded-3xl border border-zinc-800 shadow-2xl overflow-y-auto max-h-[90vh]">
             <h3 id="form-title-display" class="text-2xl font-bold mb-6 text-orange-500 text-center"></h3>
             <form id="application-form" class="space-y-4">
                 <input type="text" id="roblox_name" required placeholder="اسمك في روبلوكس" class="w-full bg-black border border-zinc-800 p-3 rounded-xl outline-none focus:border-orange-500 text-white">
                 <input type="text" id="discord_name" required placeholder="اسمك في ديسكورد" class="w-full bg-black border border-zinc-800 p-3 rounded-xl outline-none focus:border-orange-500 text-white">
                 <div id="questions-list" class="space-y-4 pt-4 border-t border-zinc-800"></div>
                 <div class="flex gap-4 mt-8">
-                    <button type="submit" class="flex-1 bg-orange-600 py-3 rounded-xl font-bold">إرسال</button>
-                    <button type="button" onclick="closeApply()" class="flex-1 bg-zinc-800 py-3 rounded-xl font-bold">إلغاء</button>
+                    <button type="submit" id="submit-btn" class="flex-1 bg-orange-600 py-3 rounded-xl font-bold">إرسال الطلب</button>
+                    <button type="button" onclick="document.getElementById('apply-overlay').classList.add('hidden')" class="flex-1 bg-zinc-800 py-3 rounded-xl font-bold">إلغاء</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <script>
-        const forms = JSON.parse(localStorage.getItem('trickster_forms')) || [];
-        const container = document.getElementById('forms-container');
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        function render() {
-            if(forms.length === 0) {
-                container.innerHTML = '<p class="text-center text-zinc-600 pt-20">لا يوجد وظائف متاحة حالياً</p>';
-                return;
-            }
-            container.innerHTML = forms.map(f => `
-                <div class="apply-card">
-                    <div class="flex justify-between items-start mb-4">
-                        <div>
-                            <h2 class="text-2xl font-black mb-1">${f.name}</h2>
-                            <p class="text-zinc-400 text-sm font-bold">${f.description}</p>
+        // --- ضع بياناتك هنا (نفس التي في admin.html) ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyAHyIOzxwKHiEWwKFYcSvBRSAUkAgo5vWU",
+            authDomain: "trickster-21842.firebaseapp.com",
+            projectId: "trickster-21842",
+            storageBucket: "trickster-21842.firebasestorage.app",
+            messagingSenderId: "510076861931",
+            appId: "1:510076861931:web:b29ec56d0c518c1da32dae"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let availableForms = [];
+        let activeForm = null;
+
+        // 1. جلب النماذج المتاحة من Firebase
+        async function fetchForms() {
+            const container = document.getElementById('forms-container');
+            try {
+                const querySnapshot = await getDocs(collection(db, "forms"));
+                availableForms = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+                if(availableForms.length === 0) {
+                    container.innerHTML = '<p class="text-center text-zinc-600 pt-20">لا توجد تقديمات متاحة حالياً</p>';
+                    return;
+                }
+
+                container.innerHTML = availableForms.map(f => `
+                    <div class="apply-card">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h2 class="text-2xl font-black mb-1">${f.name}</h2>
+                                <p class="text-zinc-400 text-sm font-bold">${f.description || ''}</p>
+                            </div>
+                            <span class="text-[10px] px-3 py-1 rounded-full bg-green-900 text-green-400">مفتوح</span>
                         </div>
-                        <span class="text-[10px] px-3 py-1 rounded-full ${f.status === 'مفتوح' ? 'bg-green-900 text-green-400' : 'bg-red-900 text-red-400'}">
-                            ${f.status}
-                        </span>
-                    </div>
-                    <button onclick="openForm('${f.id}')" ${f.status==='مغلق'?'disabled':''} 
-                        class="w-full py-4 rounded-xl font-bold transition ${f.status === 'مفتوح' ? 'bg-orange-600 hover:bg-orange-700' : 'bg-zinc-900 text-zinc-600'}">
-                        ${f.status === 'مفتوح' ? 'تقديم الآن' : 'التقديم مغلق حالياً'}
-                    </button>
-                </div>`).join('');
+                        <button onclick="window.openApply('${f.id}')" class="w-full py-4 rounded-xl font-bold bg-orange-600 hover:bg-orange-700 transition">
+                            تقديم الآن
+                        </button>
+                    </div>`).join('');
+            } catch (error) {
+                container.innerHTML = '<p class="text-center text-red-500 pt-20">خطأ في الاتصال بقاعدة البيانات</p>';
+            }
         }
 
-        let activeId = null;
-        function openForm(id) {
-            const f = forms.find(x => x.id == id);
-            activeId = id;
-            document.getElementById('form-title-display').innerText = f.name;
-            document.getElementById('questions-list').innerHTML = f.questions.map((q, i) => `
+        // 2. فتح نافذة التقديم
+        window.openApply = (id) => {
+            activeForm = availableForms.find(f => f.id === id);
+            document.getElementById('form-title-display').innerText = activeForm.name;
+            
+            const qList = document.getElementById('questions-list');
+            qList.innerHTML = (activeForm.questions || []).map((q, i) => `
                 <div>
                     <label class="block text-xs text-zinc-500 mb-2">${q.text}</label>
                     ${q.type === 'text' 
@@ -76,27 +101,44 @@
                             <option value="">اختر..</option><option value="نعم">نعم</option><option value="لا">لا</option>
                            </select>`}
                 </div>`).join('');
+            
             document.getElementById('apply-overlay').classList.remove('hidden');
-        }
+        };
 
-        document.getElementById('application-form').onsubmit = function(e) {
+        // 3. إرسال الطلب إلى Firebase
+        document.getElementById('application-form').onsubmit = async (e) => {
             e.preventDefault();
-            const f = forms.find(x => x.id == activeId);
-            const data = {
-                formName: f.name,
+            const submitBtn = document.getElementById('submit-btn');
+            submitBtn.innerText = "جاري الإرسال...";
+            submitBtn.disabled = true;
+
+            const responses = activeForm.questions.map((q, i) => ({
+                question: q.text,
+                answer: e.target[`q_${i}`].value
+            }));
+
+            const submissionData = {
+                formName: activeForm.name,
                 roblox: document.getElementById('roblox_name').value,
                 discord: document.getElementById('discord_name').value,
-                responses: f.questions.map((q, i) => ({ question: q.text, answer: e.target[`q_${i}`].value }))
+                responses: responses,
+                submittedAt: new Date()
             };
-            const subs = JSON.parse(localStorage.getItem('trickster_subs')) || [];
-            subs.push(data);
-            localStorage.setItem('trickster_subs', JSON.stringify(subs));
-            alert('تم إرسال طلبك بنجاح!');
-            location.reload();
-        }
 
-        function closeApply() { document.getElementById('apply-overlay').classList.add('hidden'); }
-        render();
+            try {
+                // حفظ الطلب في مجموعة "submissions"
+                await addDoc(collection(db, "submissions"), submissionData);
+                alert('تم إرسال طلبك بنجاح! سيتم مراجعته من قبل الإدارة.');
+                location.reload();
+            } catch (error) {
+                alert('حدث خطأ أثناء الإرسال، حاول مرة أخرى.');
+                submitBtn.innerText = "إرسال الطلب";
+                submitBtn.disabled = false;
+            }
+        };
+
+        // تشغيل الجلب عند فتح الصفحة
+        fetchForms();
     </script>
 </body>
 </html>
