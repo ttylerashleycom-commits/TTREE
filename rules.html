@@ -1,89 +1,41 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trickster - القوانين</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Almarai:wght@400;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        body { font-family: 'Almarai', sans-serif; background-color: #0a0a0a; color: white; }
-        .rule-item { background-color: #111; border: 1px solid #222; border-radius: 12px; margin-bottom: 10px; overflow: hidden; transition: 0.3s; }
-        .rule-header { padding: 18px 25px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
-        .rule-content { padding: 0 25px; max-height: 0; overflow: hidden; transition: 0.3s ease-out; color: #aaa; font-size: 0.9rem; line-height: 1.6; }
-        .rule-item.active { border-color: #f37021; }
-        .rule-item.active .rule-content { max-height: 1000px; padding: 15px 25px 25px; border-top: 1px solid #222; }
-        .rule-item.active .fa-plus { transform: rotate(45deg); color: #f37021; }
-    </style>
-</head>
-<body class="p-6">
-    <div class="max-w-3xl mx-auto">
-        <header class="flex justify-between items-center mb-12">
-            <h2 class="text-3xl font-black text-orange-500">القوانين</h2>
-            <a href="index.html" class="bg-zinc-900 p-3 rounded-xl hover:bg-zinc-800 transition"><i class="fas fa-arrow-left"></i></a>
-        </header>
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-        <div id="rules-container" class="space-y-4">
-            <p class="text-center text-zinc-600 py-20">جاري تحميل القوانين...</p>
-        </div>
-    </div>
+    const firebaseConfig = {
+        apiKey: "AIzaSyAHyIOzxwKHiEWwKFYcSvBRSAUkAgo5vWU",
+        authDomain: "trickster-21842.firebaseapp.com",
+        databaseURL: "https://trickster-21842-default-rtdb.firebaseio.com",
+        projectId: "trickster-21842",
+        storageBucket: "trickster-21842.firebasestorage.app",
+        messagingSenderId: "510076861931",
+        appId: "1:510076861931:web:b29ec56d0c518c1da32dae"
+    };
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
 
-        // --- ضع بياناتك هنا (نفس التي استخدمتها في الصفحات السابقة) ---
-        const firebaseConfig = {
-            apiKey: "AIzaSyAHyIOzxwKHiEWwKFYcSvBRSAUkAgo5vWU",
-            authDomain: "trickster-21842.firebaseapp.com",
-            projectId: "trickster-21842",
-            storageBucket: "trickster-21842.firebasestorage.app",
-            messagingSenderId: "510076861931",
-            appId: "1:510076861931:web:b29ec56d0c518c1da32dae"
-        };
+    const container = document.getElementById('rules-container');
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
-        async function fetchRules() {
-            const container = document.getElementById('rules-container');
-            try {
-                // جلب القوانين من Firebase (مرتبة حسب التاريخ إذا أردت)
-                const q = query(collection(db, "rules"), orderBy("date", "desc"));
-                const querySnapshot = await getDocs(q);
-                
-                if (querySnapshot.empty) {
-                    container.innerHTML = '<p class="text-center text-zinc-700 py-20">لا توجد قوانين منشورة حالياً</p>';
-                    return;
-                }
-
-                let html = "";
-                querySnapshot.forEach((doc) => {
-                    const r = doc.data();
-                    html += `
-                        <div class="rule-item" onclick="this.classList.toggle('active')">
-                            <div class="rule-header">
-                                <span class="font-bold text-lg">${r.title}</span>
-                                <i class="fas fa-plus transition-all"></i>
-                            </div>
-                            <div class="rule-content text-zinc-400">
-                                ${r.desc.replace(/\n/g, '<br>')}
-                            </div>
-                        </div>
-                    `;
-                });
-                
-                container.innerHTML = html;
-
-            } catch (error) {
-                console.error("Error fetching rules: ", error);
-                container.innerHTML = '<p class="text-center text-red-500 py-20">حدث خطأ أثناء جلب القوانين.</p>';
-            }
+    // جلب البيانات وتحديثها تلقائياً
+    onValue(ref(db, 'rules'), (snapshot) => {
+        if (!snapshot.exists()) {
+            container.innerHTML = '<p class="text-center text-zinc-700 py-20">لا توجد قوانين حالياً</p>';
+            return;
         }
 
-        // تشغيل الدالة
-        fetchRules();
-    </script>
-</body>
-</html>
+        let html = "";
+        snapshot.forEach((child) => {
+            const r = child.val();
+            html += `
+                <div class="rule-item" onclick="this.classList.toggle('active')">
+                    <div class="rule-header">
+                        <span class="font-bold">${r.title}</span>
+                        <i class="fas fa-plus transition-all"></i>
+                    </div>
+                    <div class="rule-content">${r.desc.replace(/\n/g, '<br>')}</div>
+                </div>`;
+        });
+        container.innerHTML = html;
+    });
+</script>
