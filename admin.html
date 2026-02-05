@@ -15,6 +15,10 @@
         .tab-btn.active { background: #f37021; font-weight: bold; color: white; }
         .section { display: none; }
         .section.active { display: block; }
+        
+        /* تنسيق نافذة الإجابات */
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+        .modal-content { background: #111; border: 1px solid #222; width: 100%; max-width: 600px; padding: 30px; border-radius: 25px; max-height: 80vh; overflow-y: auto; }
     </style>
 </head>
 <body class="p-6">
@@ -60,8 +64,18 @@
         </div>
 
         <div id="subs-tab" class="section">
-            <h3 class="font-bold mb-6">الطلبات المستلمة</h3>
+            <h3 class="font-bold mb-6 text-orange-500">الطلبات المستلمة</h3>
             <div id="subs-list" class="space-y-4"></div>
+        </div>
+    </div>
+
+    <div id="ans-modal" class="modal">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-orange-500">تفاصيل الإجابات</h2>
+                <button onclick="document.getElementById('ans-modal').style.display='none'" class="text-zinc-500"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="ans-body" class="space-y-4"></div>
         </div>
     </div>
 
@@ -102,50 +116,45 @@
         document.getElementById('btn-forms-tab').onclick = () => showTab('forms-tab');
         document.getElementById('btn-subs-tab').onclick = () => showTab('subs-tab');
 
-        // حفظ قانون
-        document.getElementById('save-rule-btn').onclick = async () => {
-            const title = document.getElementById('rule-title').value;
-            const desc = document.getElementById('rule-desc').value;
-            if(!title || !desc) return alert("املأ الحقول");
-            
-            const newRef = push(ref(db, 'rules'));
-            await set(newRef, { title, desc, date: Date.now() });
-            alert("تم الحفظ!");
-            document.getElementById('rule-title').value = "";
-            document.getElementById('rule-desc').value = "";
-        };
-
-        // إضافة سؤال
-        document.getElementById('add-q-btn').onclick = () => {
-            const div = document.createElement('div');
-            div.className = "flex gap-2 mb-2";
-            div.innerHTML = `<input type="text" class="q-text" placeholder="السؤال"><select class="q-type w-32"><option value="text">نص</option><option value="bool">نعم/لا</option></select><button onclick="this.parentElement.remove()" class="text-red-500 px-2"><i class="fas fa-trash"></i></button>`;
-            document.getElementById('q-container').appendChild(div);
-        };
-
-        // حفظ نموذج
-        document.getElementById('save-form-btn').onclick = async () => {
-            const name = document.getElementById('form-name').value;
-            const desc = document.getElementById('form-desc').value;
-            const questions = [];
-            document.querySelectorAll('.q-text').forEach((q, i) => {
-                if(q.value) questions.push({ text: q.value, type: document.querySelectorAll('.q-type')[i].value });
-            });
-            if(!name || questions.length === 0) return alert("أكمل البيانات");
-
-            const newRef = push(ref(db, 'forms'));
-            await set(newRef, { name, description: desc, questions });
-            alert("تم حفظ النموذج!");
-            document.getElementById('q-container').innerHTML = "";
-        };
-
         // حذف
         window.deleteItem = (path, id) => {
-            if(confirm("حذف؟")) remove(ref(db, `${path}/${id}`));
+            if(confirm("هل أنت متأكد من الحذف؟")) remove(ref(db, `${path}/${id}`));
         };
 
-        // رندر (تحديث تلقائي)
+        // عرض الإجابات كاملة
+        window.viewAnswers = (dataJson) => {
+            const data = JSON.parse(decodeURIComponent(dataJson));
+            const body = document.getElementById('ans-body');
+            let html = `
+                <div class="bg-black/40 p-4 rounded-xl border border-zinc-800 mb-4">
+                    <p class="text-xs text-zinc-500 mb-1">صاحب الطلب</p>
+                    <p><b>روبلوكس:</b> ${data.roblox}</p>
+                    <p><b>ديسكورد:</b> ${data.discord}</p>
+                </div>
+                <div class="space-y-4">
+            `;
+            
+            if(data.answers && data.answers.length > 0) {
+                data.answers.forEach(a => {
+                    html += `
+                        <div class="border-b border-zinc-800 pb-3">
+                            <p class="text-orange-500 font-bold text-sm mb-1">${a.question}</p>
+                            <p class="text-zinc-300 text-sm leading-relaxed">${a.answer}</p>
+                        </div>
+                    `;
+                });
+            } else {
+                html += `<p class="text-center text-zinc-600">لا توجد إجابات إضافية</p>`;
+            }
+            
+            html += `</div>`;
+            body.innerHTML = html;
+            document.getElementById('ans-modal').style.display = 'flex';
+        };
+
+        // رندر البيانات وتحديثها
         function renderAll() {
+            // القوانين
             onValue(ref(db, 'rules'), (snap) => {
                 let html = "";
                 snap.forEach(child => {
@@ -154,6 +163,7 @@
                 document.getElementById('rules-list').innerHTML = html;
             });
 
+            // النماذج
             onValue(ref(db, 'forms'), (snap) => {
                 let html = "";
                 snap.forEach(child => {
@@ -162,15 +172,60 @@
                 document.getElementById('forms-list').innerHTML = html;
             });
 
+            // الطلبات (التعديل المطلوب هنا)
             onValue(ref(db, 'submissions'), (snap) => {
                 let html = "";
                 snap.forEach(child => {
                     const s = child.val();
-                    html += `<div class="admin-card mb-2"><b>${s.formName}</b><p>روبلوكس: ${s.roblox}</p><button onclick="deleteItem('submissions','${child.key}')" class="text-red-500 text-xs mt-2">حذف الطلب</button></div>`;
+                    const dataString = encodeURIComponent(JSON.stringify(s));
+                    html += `
+                        <div class="admin-card">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <h4 class="font-black text-lg text-orange-500">${s.formName}</h4>
+                                    <p class="text-sm text-zinc-400">روبلوكس: <span class="text-white">${s.roblox}</span></p>
+                                    <p class="text-sm text-zinc-400">ديسكورد: <span class="text-white">${s.discord}</span></p>
+                                </div>
+                                <button onclick="deleteItem('submissions','${child.key}')" class="text-red-900 hover:text-red-500"><i class="fas fa-trash"></i></button>
+                            </div>
+                            <button onclick="viewAnswers('${dataString}')" class="w-full bg-zinc-800 hover:bg-orange-600 text-white py-2 rounded-lg text-xs font-bold transition">إظهار الإجابات</button>
+                        </div>
+                    `;
                 });
-                document.getElementById('subs-list').innerHTML = html || "لا يوجد طلبات";
+                document.getElementById('subs-list').innerHTML = html || '<p class="text-center text-zinc-700 py-10">لا يوجد طلبات حالياً</p>';
             });
         }
+
+        // باقي وظائف الإدمن الأصلية
+        document.getElementById('save-rule-btn').onclick = async () => {
+            const title = document.getElementById('rule-title').value;
+            const desc = document.getElementById('rule-desc').value;
+            if(!title || !desc) return alert("املأ الحقول");
+            const newRef = push(ref(db, 'rules'));
+            await set(newRef, { title, desc, date: Date.now() });
+            document.getElementById('rule-title').value = ""; document.getElementById('rule-desc').value = "";
+        };
+
+        document.getElementById('add-q-btn').onclick = () => {
+            const div = document.createElement('div');
+            div.className = "flex gap-2 mb-2";
+            div.innerHTML = `<input type="text" class="q-text" placeholder="السؤال"><select class="q-type w-32"><option value="text">نص</option><option value="bool">نعم/لا</option></select><button onclick="this.parentElement.remove()" class="text-red-500 px-2"><i class="fas fa-trash"></i></button>`;
+            document.getElementById('q-container').appendChild(div);
+        };
+
+        document.getElementById('save-form-btn').onclick = async () => {
+            const name = document.getElementById('form-name').value;
+            const desc = document.getElementById('form-desc').value;
+            const questions = [];
+            document.querySelectorAll('.q-text').forEach((q, i) => {
+                if(q.value) questions.push({ text: q.value, type: document.querySelectorAll('.q-type')[i].value });
+            });
+            if(!name || questions.length === 0) return alert("أكمل البيانات");
+            const newRef = push(ref(db, 'forms'));
+            await set(newRef, { name, description: desc, questions });
+            document.getElementById('q-container').innerHTML = "";
+            document.getElementById('form-name').value = "";
+        };
     </script>
 </body>
 </html>
