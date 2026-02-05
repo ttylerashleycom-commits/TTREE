@@ -9,12 +9,75 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         body { font-family: 'Almarai', sans-serif; background-color: #0a0a0a; color: white; }
+        
+        /* تصميم بطاقات التقديم */
         .apply-card { background: #111; border: 1px solid #1d1d1d; border-radius: 20px; padding: 25px; transition: 0.3s; }
         .apply-card:hover { border-color: #f37021; transform: translateY(-5px); }
-        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
-        .overlay-content { background: #111; border: 1px solid #222; width: 100%; max-width: 500px; padding: 30px; border-radius: 25px; position: relative; }
-        input { width: 100%; background: #000; border: 1px solid #222; padding: 12px; border-radius: 12px; color: white; outline: none; margin-bottom: 15px; }
+        
+        /* تحسين النافذة المنبثقة لتسمح بالتمرير */
+        .overlay { 
+            position: fixed; 
+            inset: 0; 
+            background: rgba(0,0,0,0.9); 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            z-index: 1000; 
+            padding: 20px; 
+        }
+
+        .overlay-content { 
+            background: #111; 
+            border: 1px solid #222; 
+            width: 100%; 
+            max-width: 550px; 
+            padding: 30px; 
+            border-radius: 25px; 
+            position: relative;
+            /* حل مشكلة الأسئلة الكثيرة */
+            max-height: 90vh; 
+            overflow-y: auto; 
+        }
+
+        /* تحسين شكل المدخلات والنصوص */
+        input { 
+            width: 100%; 
+            background: #1a1a1a !important; 
+            border: 1px solid #333 !important; 
+            padding: 14px; 
+            border-radius: 12px; 
+            color: #fff !important; 
+            outline: none; 
+            margin-bottom: 15px; 
+        }
+        input:focus { border-color: #f37021 !important; }
+
+        label.question-label {
+            color: #e4e4e7 !important;
+            font-size: 0.95rem;
+            font-weight: bold;
+            margin-bottom: 8px;
+            display: block;
+            text-align: right;
+        }
+
+        /* تنسيق شريط التمرير الداخلي */
+        .overlay-content::-webkit-scrollbar { width: 6px; }
+        .overlay-content::-webkit-scrollbar-thumb { background: #f37021; border-radius: 10px; }
+
         .hidden { display: none; }
+        
+        /* لجعل زر الإغلاق ثابت في الأعلى أثناء التمرير */
+        .close-btn {
+            position: sticky;
+            top: 0;
+            float: left;
+            background: #111;
+            color: #555;
+            font-size: 1.2rem;
+            z-index: 100;
+            padding: 5px;
+        }
     </style>
 </head>
 <body class="p-6">
@@ -32,20 +95,24 @@
 
     <div id="apply-overlay" class="overlay hidden">
         <div class="overlay-content">
-            <button onclick="document.getElementById('apply-overlay').classList.add('hidden')" class="absolute top-4 left-4 text-zinc-500"><i class="fas fa-times"></i></button>
-            <h2 id="form-title-display" class="text-2xl font-black text-orange-500 mb-6">اسم النموذج</h2>
+            <button onclick="document.getElementById('apply-overlay').classList.add('hidden')" class="close-btn">
+                <i class="fas fa-times"></i>
+            </button>
+
+            <h2 id="form-title-display" class="text-2xl font-black text-orange-500 mb-8 mt-2">اسم النموذج</h2>
             
             <form id="application-form">
-                <label class="block text-xs text-zinc-500 mb-2">اسمك في روبلوكس</label>
+                <label class="question-label">اسمك في روبلوكس</label>
                 <input type="text" id="roblox_name" required placeholder="Roblox Username">
                 
-                <label class="block text-xs text-zinc-500 mb-2">يوزر الديسكورد</label>
+                <label class="question-label">يوزر الديسكورد</label>
                 <input type="text" id="discord_name" required placeholder="Discord ID">
 
-                <div id="questions-list" class="space-y-4 mb-6">
-                    </div>
+                <div id="questions-list" class="space-y-2 mb-8"></div>
 
-                <button type="submit" class="w-full bg-orange-600 py-4 rounded-xl font-bold hover:bg-orange-700 transition">إرسال الطلب</button>
+                <button type="submit" class="w-full bg-orange-600 py-4 rounded-xl font-bold hover:bg-orange-700 transition shadow-lg shadow-orange-600/20">
+                    إرسال الطلب
+                </button>
             </form>
         </div>
     </div>
@@ -70,7 +137,6 @@
         let activeForm = null;
         window.allForms = {};
 
-        // عرض النماذج المتاحة
         onValue(ref(db, 'forms'), (snapshot) => {
             const container = document.getElementById('forms-container');
             if(!snapshot.exists()) {
@@ -92,7 +158,6 @@
             container.innerHTML = html;
         });
 
-        // فتح النموذج للإرسال
         window.openForm = (id) => {
             activeForm = window.allForms[id];
             document.getElementById('form-title-display').innerText = activeForm.name;
@@ -100,27 +165,27 @@
             const qList = document.getElementById('questions-list');
             if (activeForm.questions) {
                 qList.innerHTML = activeForm.questions.map((q, i) => `
-                    <div>
-                        <label class="block text-xs text-zinc-500 mb-2">${q.text}</label>
-                        <input type="text" name="q_${i}" required class="w-full bg-black border border-zinc-800 p-3 rounded-xl text-white outline-none">
+                    <div class="mb-4">
+                        <label class="question-label">${q.text}</label>
+                        <input type="text" name="q_${i}" required placeholder="أجب هنا..." class="w-full">
                     </div>`).join('');
             } else {
                 qList.innerHTML = "";
             }
             
             document.getElementById('apply-overlay').classList.remove('hidden');
+            // تصفير التمرير للأعلى عند فتح نموذج جديد
+            document.querySelector('.overlay-content').scrollTop = 0;
         };
 
-        // إرسال الطلب
         document.getElementById('application-form').onsubmit = async (e) => {
             e.preventDefault();
             
-            // جمع الإجابات الإضافية
             const answers = [];
             if(activeForm.questions) {
                 activeForm.questions.forEach((q, i) => {
-                    const val = document.getElementsByName(`q_${i}`)[0].value;
-                    answers.push({ question: q.text, answer: val });
+                    const inputEl = document.getElementsByName(`q_${i}`)[0];
+                    answers.push({ question: q.text, answer: inputEl.value });
                 });
             }
 
@@ -133,14 +198,12 @@
             };
 
             try {
-                const newRef = push(ref(db, 'submissions'));
-                await set(newRef, data);
+                await set(push(ref(db, 'submissions')), data);
                 alert('تم إرسال طلبك بنجاح!');
                 document.getElementById('apply-overlay').classList.add('hidden');
                 document.getElementById('application-form').reset();
             } catch (error) {
                 alert('حدث خطأ أثناء الإرسال');
-                console.error(error);
             }
         };
     </script>
