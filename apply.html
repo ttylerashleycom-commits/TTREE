@@ -1,69 +1,148 @@
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, onValue, push, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trickster - التقديمات</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Almarai:wght@400;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { font-family: 'Almarai', sans-serif; background-color: #0a0a0a; color: white; }
+        .apply-card { background: #111; border: 1px solid #1d1d1d; border-radius: 20px; padding: 25px; transition: 0.3s; }
+        .apply-card:hover { border-color: #f37021; transform: translateY(-5px); }
+        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+        .overlay-content { background: #111; border: 1px solid #222; width: 100%; max-width: 500px; padding: 30px; border-radius: 25px; position: relative; }
+        input { width: 100%; background: #000; border: 1px solid #222; padding: 12px; border-radius: 12px; color: white; outline: none; margin-bottom: 15px; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body class="p-6">
 
-    const firebaseConfig = {
-        apiKey: "AIzaSyAHyIOzxwKHiEWwKFYcSvBRSAUkAgo5vWU",
-        authDomain: "trickster-21842.firebaseapp.com",
-        databaseURL: "https://trickster-21842-default-rtdb.firebaseio.com",
-        projectId: "trickster-21842",
-        storageBucket: "trickster-21842.firebasestorage.app",
-        messagingSenderId: "510076861931",
-        appId: "1:510076861931:web:b29ec56d0c518c1da32dae"
-    };
+    <div class="max-w-4xl mx-auto">
+        <div class="flex items-center gap-4 mb-10">
+            <a href="index.html" class="text-zinc-500 hover:text-white"><i class="fas fa-arrow-right"></i></a>
+            <h1 class="text-3xl font-black text-orange-500">التقديمات المتاحة</h1>
+        </div>
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-    
-    let activeForm = null;
+        <div id="forms-container" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <p class="text-center text-zinc-500 py-10 col-span-full">جاري تحميل التقديمات...</p>
+        </div>
+    </div>
 
-    // عرض النماذج المتاحة
-    onValue(ref(db, 'forms'), (snapshot) => {
-        const container = document.getElementById('forms-container');
-        if(!snapshot.exists()) {
-            container.innerHTML = '<p class="text-center text-zinc-600 pt-20">لا توجد تقديمات حالياً</p>';
-            return;
-        }
-        
-        let html = "";
-        snapshot.forEach(child => {
-            const f = child.val();
-            f.id = child.key;
-            html += `
-                <div class="apply-card">
-                    <h2 class="text-2xl font-black mb-1">${f.name}</h2>
-                    <p class="text-zinc-400 mb-4">${f.description || ''}</p>
-                    <button onclick="window.openForm('${f.id}')" class="w-full py-4 rounded-xl font-bold bg-orange-600 hover:bg-orange-700 transition">تقديم الآن</button>
-                </div>`;
-        });
-        container.innerHTML = html;
-        window.allForms = snapshot.val(); // حفظ النماذج مؤقتاً
-    });
+    <div id="apply-overlay" class="overlay hidden">
+        <div class="overlay-content">
+            <button onclick="document.getElementById('apply-overlay').classList.add('hidden')" class="absolute top-4 left-4 text-zinc-500"><i class="fas fa-times"></i></button>
+            <h2 id="form-title-display" class="text-2xl font-black text-orange-500 mb-6">اسم النموذج</h2>
+            
+            <form id="application-form">
+                <label class="block text-xs text-zinc-500 mb-2">اسمك في روبلوكس</label>
+                <input type="text" id="roblox_name" required placeholder="Roblox Username">
+                
+                <label class="block text-xs text-zinc-500 mb-2">يوزر الديسكورد</label>
+                <input type="text" id="discord_name" required placeholder="Discord ID">
 
-    // فتح النموذج للإرسال
-    window.openForm = (id) => {
-        activeForm = window.allForms[id];
-        document.getElementById('form-title-display').innerText = activeForm.name;
-        document.getElementById('questions-list').innerHTML = activeForm.questions.map((q, i) => `
-            <div>
-                <label class="block text-xs text-zinc-500 mb-2">${q.text}</label>
-                <input type="text" name="q_${i}" required class="w-full bg-black border border-zinc-800 p-3 rounded-xl text-white outline-none">
-            </div>`).join('');
-        document.getElementById('apply-overlay').classList.remove('hidden');
-    };
+                <div id="questions-list" class="space-y-4 mb-6">
+                    </div>
 
-    // إرسال الطلب للـ Admin
-    document.getElementById('application-form').onsubmit = async (e) => {
-        e.preventDefault();
-        const data = {
-            formName: activeForm.name,
-            roblox: document.getElementById('roblox_name').value,
-            discord: document.getElementById('discord_name').value,
-            submittedAt: Date.now()
+                <button type="submit" class="w-full bg-orange-600 py-4 rounded-xl font-bold hover:bg-orange-700 transition">إرسال الطلب</button>
+            </form>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, onValue, push, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAHyIOzxwKHiEWwKFYcSvBRSAUkAgo5vWU",
+            authDomain: "trickster-21842.firebaseapp.com",
+            databaseURL: "https://trickster-21842-default-rtdb.firebaseio.com",
+            projectId: "trickster-21842",
+            storageBucket: "trickster-21842.firebasestorage.app",
+            messagingSenderId: "510076861931",
+            appId: "1:510076861931:web:b29ec56d0c518c1da32dae"
         };
 
-        await set(push(ref(db, 'submissions')), data);
-        alert('تم إرسال طلبك بنجاح!');
-        location.reload();
-    };
-</script>
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        
+        let activeForm = null;
+        window.allForms = {};
+
+        // عرض النماذج المتاحة
+        onValue(ref(db, 'forms'), (snapshot) => {
+            const container = document.getElementById('forms-container');
+            if(!snapshot.exists()) {
+                container.innerHTML = '<p class="text-center text-zinc-600 py-20 col-span-full">لا توجد تقديمات حالياً</p>';
+                return;
+            }
+            
+            let html = "";
+            window.allForms = snapshot.val();
+            snapshot.forEach(child => {
+                const f = child.val();
+                html += `
+                    <div class="apply-card">
+                        <h2 class="text-2xl font-black mb-2">${f.name}</h2>
+                        <p class="text-zinc-400 mb-6 text-sm">${f.description || ''}</p>
+                        <button onclick="openForm('${child.key}')" class="w-full py-3 rounded-xl font-bold bg-orange-600 hover:bg-orange-700 transition">تقديم الآن</button>
+                    </div>`;
+            });
+            container.innerHTML = html;
+        });
+
+        // فتح النموذج للإرسال
+        window.openForm = (id) => {
+            activeForm = window.allForms[id];
+            document.getElementById('form-title-display').innerText = activeForm.name;
+            
+            const qList = document.getElementById('questions-list');
+            if (activeForm.questions) {
+                qList.innerHTML = activeForm.questions.map((q, i) => `
+                    <div>
+                        <label class="block text-xs text-zinc-500 mb-2">${q.text}</label>
+                        <input type="text" name="q_${i}" required class="w-full bg-black border border-zinc-800 p-3 rounded-xl text-white outline-none">
+                    </div>`).join('');
+            } else {
+                qList.innerHTML = "";
+            }
+            
+            document.getElementById('apply-overlay').classList.remove('hidden');
+        };
+
+        // إرسال الطلب
+        document.getElementById('application-form').onsubmit = async (e) => {
+            e.preventDefault();
+            
+            // جمع الإجابات الإضافية
+            const answers = [];
+            if(activeForm.questions) {
+                activeForm.questions.forEach((q, i) => {
+                    const val = document.getElementsByName(`q_${i}`)[0].value;
+                    answers.push({ question: q.text, answer: val });
+                });
+            }
+
+            const data = {
+                formName: activeForm.name,
+                roblox: document.getElementById('roblox_name').value,
+                discord: document.getElementById('discord_name').value,
+                answers: answers,
+                submittedAt: Date.now()
+            };
+
+            try {
+                const newRef = push(ref(db, 'submissions'));
+                await set(newRef, data);
+                alert('تم إرسال طلبك بنجاح!');
+                document.getElementById('apply-overlay').classList.add('hidden');
+                document.getElementById('application-form').reset();
+            } catch (error) {
+                alert('حدث خطأ أثناء الإرسال');
+                console.error(error);
+            }
+        };
+    </script>
+</body>
+</html>
