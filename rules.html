@@ -1,41 +1,89 @@
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-
-    const firebaseConfig = {
-        apiKey: "AIzaSyAHyIOzxwKHiEWwKFYcSvBRSAUkAgo5vWU",
-        authDomain: "trickster-21842.firebaseapp.com",
-        databaseURL: "https://trickster-21842-default-rtdb.firebaseio.com",
-        projectId: "trickster-21842",
-        storageBucket: "trickster-21842.firebasestorage.app",
-        messagingSenderId: "510076861931",
-        appId: "1:510076861931:web:b29ec56d0c518c1da32dae"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-
-    const container = document.getElementById('rules-container');
-
-    // جلب البيانات وتحديثها تلقائياً
-    onValue(ref(db, 'rules'), (snapshot) => {
-        if (!snapshot.exists()) {
-            container.innerHTML = '<p class="text-center text-zinc-700 py-20">لا توجد قوانين حالياً</p>';
-            return;
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trickster - القوانين</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Almarai:wght@400;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { font-family: 'Almarai', sans-serif; background-color: #0a0a0a; color: white; }
+        .rule-item { 
+            background: #111; 
+            border: 1px solid #1d1d1d; 
+            border-radius: 15px; 
+            margin-bottom: 15px; 
+            overflow: hidden; 
+            cursor: pointer;
+            transition: 0.3s;
         }
+        .rule-header { padding: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .rule-content { 
+            padding: 0 20px; 
+            max-height: 0; 
+            overflow: hidden; 
+            color: #aaa; 
+            transition: 0.3s ease-out; 
+            line-height: 1.8;
+        }
+        .rule-item.active { border-color: #f37021; }
+        .rule-item.active .rule-content { padding: 0 20px 20px 20px; max-height: 500px; }
+        .rule-item.active i { transform: rotate(45deg); color: #f37021; }
+    </style>
+</head>
+<body class="p-6">
 
-        let html = "";
-        snapshot.forEach((child) => {
-            const r = child.val();
-            html += `
-                <div class="rule-item" onclick="this.classList.toggle('active')">
-                    <div class="rule-header">
-                        <span class="font-bold">${r.title}</span>
-                        <i class="fas fa-plus transition-all"></i>
-                    </div>
-                    <div class="rule-content">${r.desc.replace(/\n/g, '<br>')}</div>
-                </div>`;
+    <div class="max-w-3xl mx-auto">
+        <div class="flex items-center gap-4 mb-10">
+            <a href="index.html" class="text-zinc-500 hover:text-white"><i class="fas fa-arrow-right"></i></a>
+            <h1 class="text-3xl font-black text-orange-500">قوانين العصابة</h1>
+        </div>
+
+        <div id="rules-container" class="space-y-4">
+            <p class="text-center text-zinc-500 py-10">جاري تحميل القوانين...</p>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAHyIOzxwKHiEWwKFYcSvBRSAUkAgo5vWU",
+            authDomain: "trickster-21842.firebaseapp.com",
+            databaseURL: "https://trickster-21842-default-rtdb.firebaseio.com",
+            projectId: "trickster-21842",
+            storageBucket: "trickster-21842.firebasestorage.app",
+            messagingSenderId: "510076861931",
+            appId: "1:510076861931:web:b29ec56d0c518c1da32dae"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        const container = document.getElementById('rules-container');
+
+        onValue(ref(db, 'rules'), (snapshot) => {
+            if (!snapshot.exists()) {
+                container.innerHTML = '<p class="text-center text-zinc-700 py-20">لا توجد قوانين حالياً</p>';
+                return;
+            }
+
+            let html = "";
+            snapshot.forEach((child) => {
+                const r = child.val();
+                html += `
+                    <div class="rule-item" onclick="this.classList.toggle('active')">
+                        <div class="rule-header">
+                            <span class="font-bold">${r.title}</span>
+                            <i class="fas fa-plus transition-all"></i>
+                        </div>
+                        <div class="rule-content">${r.desc.replace(/\n/g, '<br>')}</div>
+                    </div>`;
+            });
+            container.innerHTML = html;
         });
-        container.innerHTML = html;
-    });
-</script>
+    </script>
+</body>
+</html>
