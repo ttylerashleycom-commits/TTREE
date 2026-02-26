@@ -10,74 +10,20 @@
     <style>
         body { font-family: 'Almarai', sans-serif; background-color: #0a0a0a; color: white; }
         
-        /* تصميم بطاقات التقديم */
         .apply-card { background: #111; border: 1px solid #1d1d1d; border-radius: 20px; padding: 25px; transition: 0.3s; }
         .apply-card:hover { border-color: #f37021; transform: translateY(-5px); }
         
-        /* تحسين النافذة المنبثقة لتسمح بالتمرير */
-        .overlay { 
-            position: fixed; 
-            inset: 0; 
-            background: rgba(0,0,0,0.9); 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            z-index: 1000; 
-            padding: 20px; 
-        }
+        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+        .overlay-content { background: #111; border: 1px solid #222; width: 100%; max-width: 550px; padding: 30px; border-radius: 25px; position: relative; max-height: 90vh; overflow-y: auto; }
 
-        .overlay-content { 
-            background: #111; 
-            border: 1px solid #222; 
-            width: 100%; 
-            max-width: 550px; 
-            padding: 30px; 
-            border-radius: 25px; 
-            position: relative;
-            /* حل مشكلة الأسئلة الكثيرة */
-            max-height: 90vh; 
-            overflow-y: auto; 
-        }
-
-        /* تحسين شكل المدخلات والنصوص */
-        input { 
-            width: 100%; 
-            background: #1a1a1a !important; 
-            border: 1px solid #333 !important; 
-            padding: 14px; 
-            border-radius: 12px; 
-            color: #fff !important; 
-            outline: none; 
-            margin-bottom: 15px; 
-        }
+        input { width: 100%; background: #1a1a1a !important; border: 1px solid #333 !important; padding: 14px; border-radius: 12px; color: #fff !important; outline: none; margin-bottom: 15px; }
         input:focus { border-color: #f37021 !important; }
 
-        label.question-label {
-            color: #e4e4e7 !important;
-            font-size: 0.95rem;
-            font-weight: bold;
-            margin-bottom: 8px;
-            display: block;
-            text-align: right;
-        }
-
-        /* تنسيق شريط التمرير الداخلي */
+        .question-label { color: #e4e4e7 !important; font-size: 0.95rem; font-weight: bold; margin-bottom: 8px; display: block; text-align: right; }
         .overlay-content::-webkit-scrollbar { width: 6px; }
         .overlay-content::-webkit-scrollbar-thumb { background: #f37021; border-radius: 10px; }
-
         .hidden { display: none; }
-        
-        /* لجعل زر الإغلاق ثابت في الأعلى أثناء التمرير */
-        .close-btn {
-            position: sticky;
-            top: 0;
-            float: left;
-            background: #111;
-            color: #555;
-            font-size: 1.2rem;
-            z-index: 100;
-            padding: 5px;
-        }
+        .close-btn { position: sticky; top: 0; float: left; background: #111; color: #555; font-size: 1.2rem; z-index: 100; padding: 5px; }
     </style>
 </head>
 <body class="p-6">
@@ -85,7 +31,7 @@
     <div class="max-w-4xl mx-auto">
         <div class="flex items-center gap-4 mb-10">
             <a href="index.html" class="text-zinc-500 hover:text-white"><i class="fas fa-arrow-right"></i></a>
-            <h1 class="text-3xl font-black text-orange-500">التقديمات المتاحة</h1>
+            <h1 class="text-3xl font-black text-orange-500 italic">التقديمات المتاحة</h1>
         </div>
 
         <div id="forms-container" class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -98,21 +44,14 @@
             <button onclick="document.getElementById('apply-overlay').classList.add('hidden')" class="close-btn">
                 <i class="fas fa-times"></i>
             </button>
-
-            <h2 id="form-title-display" class="text-2xl font-black text-orange-500 mb-8 mt-2">اسم النموذج</h2>
-            
+            <h2 id="form-title-display" class="text-2xl font-black text-orange-500 mb-8 mt-2 italic uppercase">اسم النموذج</h2>
             <form id="application-form">
                 <label class="question-label">اسمك في روبلوكس</label>
                 <input type="text" id="roblox_name" required placeholder="Roblox Username">
-                
                 <label class="question-label">يوزر الديسكورد</label>
                 <input type="text" id="discord_name" required placeholder="Discord ID">
-
                 <div id="questions-list" class="space-y-2 mb-8"></div>
-
-                <button type="submit" class="w-full bg-orange-600 py-4 rounded-xl font-bold hover:bg-orange-700 transition shadow-lg shadow-orange-600/20">
-                    إرسال الطلب
-                </button>
+                <button type="submit" id="submit-btn" class="w-full bg-orange-600 py-4 rounded-xl font-bold hover:bg-orange-700 transition shadow-lg shadow-orange-600/20">إرسال الطلب</button>
             </form>
         </div>
     </div>
@@ -126,33 +65,36 @@
             authDomain: "trickster-21842.firebaseapp.com",
             databaseURL: "https://trickster-21842-default-rtdb.firebaseio.com",
             projectId: "trickster-21842",
-            storageBucket: "trickster-21842.firebasestorage.app",
+            storageBucket: "trickster-21842.appspot.com",
             messagingSenderId: "510076861931",
             appId: "1:510076861931:web:b29ec56d0c518c1da32dae"
         };
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-        
         let activeForm = null;
         window.allForms = {};
 
+        // جلب التقديمات مع الوصف والتحقق من الحالة
         onValue(ref(db, 'forms'), (snapshot) => {
             const container = document.getElementById('forms-container');
             if(!snapshot.exists()) {
                 container.innerHTML = '<p class="text-center text-zinc-600 py-20 col-span-full">لا توجد تقديمات حالياً</p>';
                 return;
             }
-            
             let html = "";
             window.allForms = snapshot.val();
             snapshot.forEach(child => {
                 const f = child.val();
+                const isOpen = f.isOpen !== false;
                 html += `
                     <div class="apply-card">
                         <h2 class="text-2xl font-black mb-2">${f.name}</h2>
-                        <p class="text-zinc-400 mb-6 text-sm">${f.description || ''}</p>
-                        <button onclick="openForm('${child.key}')" class="w-full py-3 rounded-xl font-bold bg-orange-600 hover:bg-orange-700 transition">تقديم الآن</button>
+                        <p class="text-zinc-500 mb-6 text-sm leading-relaxed">${f.description || 'لا يوجد وصف متاح'}</p>
+                        ${isOpen ? 
+                            `<button onclick="openForm('${child.key}')" class="w-full py-3 rounded-xl font-bold bg-orange-600 hover:bg-orange-700 transition">تقديم الآن</button>` :
+                            `<button disabled class="w-full py-3 rounded-xl font-bold bg-zinc-800 text-zinc-600 cursor-not-allowed">التقديم مغلق حالياً</button>`
+                        }
                     </div>`;
             });
             container.innerHTML = html;
@@ -161,49 +103,60 @@
         window.openForm = (id) => {
             activeForm = window.allForms[id];
             document.getElementById('form-title-display').innerText = activeForm.name;
-            
             const qList = document.getElementById('questions-list');
-            if (activeForm.questions) {
-                qList.innerHTML = activeForm.questions.map((q, i) => `
-                    <div class="mb-4">
-                        <label class="question-label">${q.text}</label>
-                        <input type="text" name="q_${i}" required placeholder="أجب هنا..." class="w-full">
-                    </div>`).join('');
-            } else {
-                qList.innerHTML = "";
-            }
-            
+            qList.innerHTML = (activeForm.questions || []).map((q, i) => `
+                <div class="mb-4">
+                    <label class="question-label">${q.text}</label>
+                    <input type="text" name="q_${i}" required placeholder="أجب هنا..." class="w-full">
+                </div>`).join('');
             document.getElementById('apply-overlay').classList.remove('hidden');
-            // تصفير التمرير للأعلى عند فتح نموذج جديد
-            document.querySelector('.overlay-content').scrollTop = 0;
         };
 
         document.getElementById('application-form').onsubmit = async (e) => {
             e.preventDefault();
-            
-            const answers = [];
-            if(activeForm.questions) {
-                activeForm.questions.forEach((q, i) => {
-                    const inputEl = document.getElementsByName(`q_${i}`)[0];
-                    answers.push({ question: q.text, answer: inputEl.value });
-                });
-            }
+            const submitBtn = document.getElementById('submit-btn');
+            submitBtn.disabled = true;
+            submitBtn.innerText = "جاري الإرسال...";
 
-            const data = {
-                formName: activeForm.name,
-                roblox: document.getElementById('roblox_name').value,
-                discord: document.getElementById('discord_name').value,
-                answers: answers,
-                submittedAt: Date.now()
-            };
+            const roblox = document.getElementById('roblox_name').value;
+            const discord = document.getElementById('discord_name').value;
+            const answers = (activeForm.questions || []).map((q, i) => ({
+                question: q.text,
+                answer: document.getElementsByName(`q_${i}`)[0].value
+            }));
+
+            const data = { formName: activeForm.name, roblox, discord, answers, submittedAt: Date.now() };
 
             try {
-                await set(push(ref(db, 'submissions')), data);
-                alert('تم إرسال طلبك بنجاح!');
-                document.getElementById('apply-overlay').classList.add('hidden');
-                document.getElementById('application-form').reset();
-            } catch (error) {
-                alert('حدث خطأ أثناء الإرسال');
+                // 1. Firebase
+                await push(ref(db, 'submissions'), data);
+
+                // 2. Discord Webhook
+                const webhookUrl = "https://discord.com/api/webhooks/1476427910968508506/F5yxgGnupk4Rv99BsRfrZqcbi_YVcKP08_pNY85fa0F6JXmn9-Q8bDXn2dSmTp_tuD6W";
+                const embed = {
+                    username: "Trickster Apply Bot",
+                    embeds: [{
+                        title: "🚀 طلب تقديم جديد",
+                        color: 15953953,
+                        fields: [
+                            { name: "📋 النوع", value: activeForm.name, inline: true },
+                            { name: "👤 روبلوكس", value: roblox, inline: true },
+                            { name: "🆔 ديسكورد", value: discord, inline: true },
+                            ...answers.map(a => ({ name: `❓ ${a.question}`, value: a.answer, inline: false }))
+                        ],
+                        footer: { text: "Trickster System" },
+                        timestamp: new Date()
+                    }]
+                };
+
+                await fetch(webhookUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(embed) });
+
+                alert('تم إرسال طلبك بنجاح للديسكورد وللإدارة!');
+                location.reload();
+            } catch (err) {
+                alert('حدث خطأ، تأكد من اتصالك بالإنترنت');
+                submitBtn.disabled = false;
+                submitBtn.innerText = "إرسال الطلب";
             }
         };
     </script>
