@@ -3,229 +3,272 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>إدارة Trickster</title>
+    <title>إدارة Trickster - لوحة التحكم</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Almarai:wght@400;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { font-family: 'Almarai', sans-serif; background-color: #0a0a0a; color: white; }
-        .admin-card { background-color: #111; border: 1px solid #1d1d1d; border-radius: 20px; padding: 20px; }
+        body { font-family: 'Almarai', sans-serif; background-color: #0a0a0a; color: white; min-height: 100vh; }
+        .admin-card { background-color: #111; border: 1px solid #1d1d1d; border-radius: 20px; padding: 20px; margin-bottom: 15px; }
         input, select, textarea { width: 100%; background: #000; border: 1px solid #222; padding: 12px; border-radius: 12px; color: white; outline: none; margin-bottom: 10px; }
-        .tab-btn { flex: 1; padding: 12px; font-size: 14px; background: #111; border-radius: 10px; color: #555; }
+        .tab-btn { flex: 1; padding: 12px; font-size: 13px; background: #111; border-radius: 10px; color: #555; white-space: nowrap; transition: 0.3s; }
         .tab-btn.active { background: #f37021; font-weight: bold; color: white; }
         .section { display: none; }
         .section.active { display: block; }
-        
-        /* تنسيق نافذة الإجابات */
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
-        .modal-content { background: #111; border: 1px solid #222; width: 100%; max-width: 600px; padding: 30px; border-radius: 25px; max-height: 80vh; overflow-y: auto; }
+        .btn-edit { color: #3b82f6; cursor: pointer; margin-left: 15px; font-size: 1.1rem; }
+        .btn-delete { color: #ef4444; cursor: pointer; font-size: 1.1rem; }
     </style>
 </head>
-<body class="p-6">
+<body class="p-4 md:p-10">
 
     <div id="login-screen" class="max-w-md mx-auto mt-20 text-center">
-        <h2 class="text-2xl font-black mb-6 text-orange-500">لوحة التحكم</h2>
-        <input type="password" id="admin-pass" placeholder="كلمة المرور">
-        <button id="login-btn-action" class="w-full bg-orange-600 py-3 rounded-xl font-bold">دخول</button>
+        <h2 class="text-3xl font-black mb-8 text-orange-500 italic uppercase">Admin Access</h2>
+        <div class="admin-card">
+            <input type="password" id="admin-pass" placeholder="أدخل كلمة المرور">
+            <button id="login-btn-action" class="w-full bg-orange-600 py-4 rounded-xl font-bold hover:bg-orange-700 transition">دخول اللوحة</button>
+        </div>
+        <a href="index.html" class="text-zinc-500 text-sm underline hover:text-white">العودة للموقع الرئيسي</a>
     </div>
 
-    <div id="admin-panel" class="hidden max-w-4xl mx-auto">
-        <div class="flex justify-between items-center mb-8">
-            <h1 class="text-2xl font-black text-orange-500">لوحة التحكم</h1>
-            <button onclick="location.reload()" class="bg-red-900/20 text-red-500 px-4 py-2 rounded-xl text-xs font-bold border border-red-900/30">خروج</button>
+    <div id="admin-panel" class="hidden max-w-5xl mx-auto">
+        <div class="flex justify-between items-center mb-8 border-b border-zinc-900 pb-4">
+            <h1 class="text-2xl font-black text-orange-500 italic">TRICKSTER CONTROL</h1>
+            <button onclick="location.reload()" class="bg-red-900/20 text-red-500 px-4 py-2 rounded-xl text-xs font-bold border border-red-900/40">تسجيل خروج</button>
         </div>
 
-        <div class="flex gap-2 mb-8">
-            <button id="btn-rules-tab" class="tab-btn active">القوانين</button>
-            <button id="btn-forms-tab" class="tab-btn">النماذج</button>
-            <button id="btn-subs-tab" class="tab-btn">الطلبات</button>
+        <div class="flex gap-2 mb-8 overflow-x-auto pb-4">
+            <button onclick="showTab('rules-tab')" id="btn-rules-tab" class="tab-btn active">القوانين</button>
+            <button onclick="showTab('forms-tab')" id="btn-forms-tab" class="tab-btn">التقديمات</button>
+            <button onclick="showTab('ads-tab')" id="btn-ads-tab" class="tab-btn">الأخبار</button>
+            <button onclick="showTab('rates-tab')" id="btn-rates-tab" class="tab-btn text-yellow-500">التقييمات</button>
+            <button onclick="showTab('subs-tab')" id="btn-subs-tab" class="tab-btn">الطلبات</button>
         </div>
 
         <div id="rules-tab" class="section active">
-            <div class="admin-card mb-6">
-                <h3 class="font-bold mb-4">إضافة قانون جديد</h3>
+            <div class="admin-card">
+                <h3 id="rule-mode-title" class="font-bold mb-4 text-orange-500">إضافة قانون جديد</h3>
                 <input type="text" id="rule-title" placeholder="عنوان القانون">
-                <textarea id="rule-desc" placeholder="شرح القانون..." class="h-24"></textarea>
-                <button id="save-rule-btn" class="w-full bg-orange-600 py-3 rounded-xl font-bold">إضافة القانون</button>
+                <textarea id="rule-desc" placeholder="شرح القانون بالتفصيل..." class="h-24"></textarea>
+                <input type="hidden" id="edit-rule-id">
+                <button id="save-rule-btn" class="w-full bg-orange-600 py-3 rounded-xl font-bold">حفظ القانون</button>
             </div>
             <div id="rules-list" class="space-y-3"></div>
         </div>
 
         <div id="forms-tab" class="section">
-            <div class="admin-card mb-6">
-                <h3 class="font-bold mb-4">إنشاء نموذج تقديم</h3>
-                <input type="text" id="form-name" placeholder="اسم التقديم">
-                <input type="text" id="form-desc" placeholder="وصف التقديم">
-                <div id="q-container" class="space-y-2 mb-4"></div>
-                <button id="add-q-btn" class="text-xs text-orange-500 font-bold mb-4">+ إضافة سؤال</button>
+            <div class="admin-card">
+                <h3 id="form-mode-title" class="font-bold mb-4 text-orange-500">إدارة نماذج التقديم</h3>
+                <input type="text" id="form-name" placeholder="اسم التقديم (مثلاً: تقديم طقم)">
+                <input type="text" id="form-desc" placeholder="وصف قصير للتقديم">
+                <div id="q-container" class="mb-2"></div>
+                <input type="hidden" id="edit-form-id">
+                <button onclick="addQ()" class="text-xs text-blue-500 mb-6 font-bold">+ إضافة سؤال جديد</button>
                 <button id="save-form-btn" class="w-full bg-orange-600 py-3 rounded-xl font-bold">حفظ النموذج</button>
             </div>
-            <div id="forms-list" class="space-y-3"></div>
+            <div id="forms-list" class="space-y-4"></div>
+        </div>
+
+        <div id="ads-tab" class="section">
+            <div class="admin-card">
+                <h3 id="ad-mode-title" class="font-bold mb-4 text-orange-500">نشر خبر أو إعلان</h3>
+                <input type="text" id="ad-title" placeholder="عنوان الخبر">
+                <textarea id="ad-content" placeholder="محتوى الإعلان..." class="h-24"></textarea>
+                <input type="hidden" id="edit-ad-id">
+                <button id="save-ad-btn" class="w-full bg-orange-600 py-3 rounded-xl font-bold">نشر الآن</button>
+            </div>
+            <div id="ads-list" class="space-y-3"></div>
+        </div>
+
+        <div id="rates-tab" class="section">
+            <h2 class="text-xl font-bold mb-6 text-yellow-500 italic">التقييمات والنجوم</h2>
+            <div id="rates-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
         </div>
 
         <div id="subs-tab" class="section">
-            <h3 class="font-bold mb-6 text-orange-500">الطلبات المستلمة</h3>
+            <h2 class="text-xl font-bold mb-6 text-orange-500 italic">طلبات التقديم الواردة</h2>
             <div id="subs-list" class="space-y-4"></div>
-        </div>
-    </div>
-
-    <div id="ans-modal" class="modal">
-        <div class="modal-content">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-xl font-bold text-orange-500">تفاصيل الإجابات</h2>
-                <button onclick="document.getElementById('ans-modal').style.display='none'" class="text-zinc-500"><i class="fas fa-times"></i></button>
-            </div>
-            <div id="ans-body" class="space-y-4"></div>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, push, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getDatabase, ref, push, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAHyIOzxwKHiEWwKFYcSvBRSAUkAgo5vWU",
             authDomain: "trickster-21842.firebaseapp.com",
             databaseURL: "https://trickster-21842-default-rtdb.firebaseio.com",
             projectId: "trickster-21842",
-            storageBucket: "trickster-21842.firebasestorage.app",
+            storageBucket: "trickster-21842.appspot.com",
             messagingSenderId: "510076861931",
             appId: "1:510076861931:web:b29ec56d0c518c1da32dae"
         };
-
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
         // نظام الدخول
         document.getElementById('login-btn-action').onclick = () => {
-            if(document.getElementById('admin-pass').value === 'aassdd112233rte') {
+            const pass = document.getElementById('admin-pass').value;
+            if(pass === 'aassdd112233rte') {
                 document.getElementById('login-screen').classList.add('hidden');
                 document.getElementById('admin-panel').classList.remove('hidden');
                 renderAll();
-            } else { alert("خطأ!"); }
+            } else { alert("كلمة المرور غير صحيحة!"); }
         };
 
-        // التبويبات
+        // تبديل الأقسام
         window.showTab = (id) => {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(id).classList.add('active');
             document.getElementById('btn-'+id).classList.add('active');
         };
-        document.getElementById('btn-rules-tab').onclick = () => showTab('rules-tab');
-        document.getElementById('btn-forms-tab').onclick = () => showTab('forms-tab');
-        document.getElementById('btn-subs-tab').onclick = () => showTab('subs-tab');
 
-        // حذف
-        window.deleteItem = (path, id) => {
-            if(confirm("هل أنت متأكد من الحذف؟")) remove(ref(db, `${path}/${id}`));
-        };
-
-        // عرض الإجابات كاملة
-        window.viewAnswers = (dataJson) => {
-            const data = JSON.parse(decodeURIComponent(dataJson));
-            const body = document.getElementById('ans-body');
-            let html = `
-                <div class="bg-black/40 p-4 rounded-xl border border-zinc-800 mb-4">
-                    <p class="text-xs text-zinc-500 mb-1">صاحب الطلب</p>
-                    <p><b>روبلوكس:</b> ${data.roblox}</p>
-                    <p><b>ديسكورد:</b> ${data.discord}</p>
-                </div>
-                <div class="space-y-4">
-            `;
-            
-            if(data.answers && data.answers.length > 0) {
-                data.answers.forEach(a => {
-                    html += `
-                        <div class="border-b border-zinc-800 pb-3">
-                            <p class="text-orange-500 font-bold text-sm mb-1">${a.question}</p>
-                            <p class="text-zinc-300 text-sm leading-relaxed">${a.answer}</p>
-                        </div>
-                    `;
-                });
-            } else {
-                html += `<p class="text-center text-zinc-600">لا توجد إجابات إضافية</p>`;
+        // حذف بتأكيد
+        window.safeDelete = (path, id) => {
+            if(confirm("❗ هل أنت متأكد من الحذف النهائي؟")) {
+                remove(ref(db, `${path}/${id}`));
             }
-            
-            html += `</div>`;
-            body.innerHTML = html;
-            document.getElementById('ans-modal').style.display = 'flex';
         };
 
-        // رندر البيانات وتحديثها
-        function renderAll() {
-            // القوانين
-            onValue(ref(db, 'rules'), (snap) => {
-                let html = "";
-                snap.forEach(child => {
-                    html += `<div class="admin-card flex justify-between items-center py-3 mb-2"><span>${child.val().title}</span><button onclick="deleteItem('rules','${child.key}')" class="text-red-500"><i class="fas fa-trash"></i></button></div>`;
-                });
-                document.getElementById('rules-list').innerHTML = html;
-            });
-
-            // النماذج
-            onValue(ref(db, 'forms'), (snap) => {
-                let html = "";
-                snap.forEach(child => {
-                    html += `<div class="admin-card flex justify-between items-center py-3 mb-2"><span>${child.val().name}</span><button onclick="deleteItem('forms','${child.key}')" class="text-red-500"><i class="fas fa-trash"></i></button></div>`;
-                });
-                document.getElementById('forms-list').innerHTML = html;
-            });
-
-            // الطلبات (التعديل المطلوب هنا)
-            onValue(ref(db, 'submissions'), (snap) => {
-                let html = "";
-                snap.forEach(child => {
-                    const s = child.val();
-                    const dataString = encodeURIComponent(JSON.stringify(s));
-                    html += `
-                        <div class="admin-card">
-                            <div class="flex justify-between items-start mb-4">
-                                <div>
-                                    <h4 class="font-black text-lg text-orange-500">${s.formName}</h4>
-                                    <p class="text-sm text-zinc-400">روبلوكس: <span class="text-white">${s.roblox}</span></p>
-                                    <p class="text-sm text-zinc-400">ديسكورد: <span class="text-white">${s.discord}</span></p>
-                                </div>
-                                <button onclick="deleteItem('submissions','${child.key}')" class="text-red-900 hover:text-red-500"><i class="fas fa-trash"></i></button>
-                            </div>
-                            <button onclick="viewAnswers('${dataString}')" class="w-full bg-zinc-800 hover:bg-orange-600 text-white py-2 rounded-lg text-xs font-bold transition">إظهار الإجابات</button>
-                        </div>
-                    `;
-                });
-                document.getElementById('subs-list').innerHTML = html || '<p class="text-center text-zinc-700 py-10">لا يوجد طلبات حالياً</p>';
-            });
-        }
-
-        // باقي وظائف الإدمن الأصلية
+        // --- القوانين (إضافة وتعديل) ---
         document.getElementById('save-rule-btn').onclick = async () => {
             const title = document.getElementById('rule-title').value;
             const desc = document.getElementById('rule-desc').value;
-            if(!title || !desc) return alert("املأ الحقول");
-            const newRef = push(ref(db, 'rules'));
-            await set(newRef, { title, desc, date: Date.now() });
-            document.getElementById('rule-title').value = ""; document.getElementById('rule-desc').value = "";
+            const editId = document.getElementById('edit-rule-id').value;
+            if(!title) return alert("يرجى كتابة العنوان");
+
+            if(editId) await update(ref(db, `rules/${editId}`), { title, desc });
+            else await push(ref(db, 'rules'), { title, desc });
+            
+            alert("تم الحفظ بنجاح");
+            resetForm('rule');
         };
 
-        document.getElementById('add-q-btn').onclick = () => {
+        window.editRule = (id, title, desc) => {
+            document.getElementById('rule-title').value = title;
+            document.getElementById('rule-desc').value = decodeURIComponent(desc);
+            document.getElementById('edit-rule-id').value = id;
+            document.getElementById('rule-mode-title').innerText = "تعديل القانون المختار";
+            window.scrollTo(0,0);
+        };
+
+        // --- الأخبار (إضافة وتعديل) ---
+        document.getElementById('save-ad-btn').onclick = async () => {
+            const title = document.getElementById('ad-title').value;
+            const content = document.getElementById('ad-content').value;
+            const editId = document.getElementById('edit-ad-id').value;
+            if(!title) return alert("يرجى كتابة عنوان الخبر");
+
+            if(editId) await update(ref(db, `ads/${editId}`), { title, content });
+            else await push(ref(db, 'ads'), { title, content, date: Date.now() });
+            
+            alert("تم النشر بنجاح");
+            resetForm('ad');
+        };
+
+        window.editAd = (id, title, content) => {
+            document.getElementById('ad-title').value = title;
+            document.getElementById('ad-content').value = decodeURIComponent(content);
+            document.getElementById('edit-ad-id').value = id;
+            document.getElementById('ad-mode-title').innerText = "تعديل الخبر المنشور";
+            window.scrollTo(0,0);
+        };
+
+        // --- النماذج (تعديل كامل) ---
+        window.addQ = (val = "") => {
             const div = document.createElement('div');
             div.className = "flex gap-2 mb-2";
-            div.innerHTML = `<input type="text" class="q-text" placeholder="السؤال"><select class="q-type w-32"><option value="text">نص</option><option value="bool">نعم/لا</option></select><button onclick="this.parentElement.remove()" class="text-red-500 px-2"><i class="fas fa-trash"></i></button>`;
+            div.innerHTML = `<input type="text" class="q-text" placeholder="اكتب السؤال هنا..." value="${val}"><button onclick="this.parentElement.remove()" class="text-red-500 px-2 font-bold">X</button>`;
             document.getElementById('q-container').appendChild(div);
         };
 
         document.getElementById('save-form-btn').onclick = async () => {
             const name = document.getElementById('form-name').value;
-            const desc = document.getElementById('form-desc').value;
-            const questions = [];
-            document.querySelectorAll('.q-text').forEach((q, i) => {
-                if(q.value) questions.push({ text: q.value, type: document.querySelectorAll('.q-type')[i].value });
-            });
-            if(!name || questions.length === 0) return alert("أكمل البيانات");
-            const newRef = push(ref(db, 'forms'));
-            await set(newRef, { name, description: desc, questions });
-            document.getElementById('q-container').innerHTML = "";
-            document.getElementById('form-name').value = "";
+            const description = document.getElementById('form-desc').value;
+            const editId = document.getElementById('edit-form-id').value;
+            const qs = [];
+            document.querySelectorAll('.q-text').forEach(q => { if(q.value) qs.push({text: q.value, type: 'text'}); });
+            
+            if(!name) return alert("ادخل اسم النموذج");
+
+            const data = { name, description, questions: qs };
+            if(editId) await update(ref(db, `forms/${editId}`), data);
+            else { data.isOpen = true; await push(ref(db, 'forms'), data); }
+            
+            alert("تم حفظ التعديلات");
+            location.reload();
         };
+
+        window.editForm = (id, name, desc, qsJson) => {
+            document.getElementById('form-name').value = name;
+            document.getElementById('form-desc').value = decodeURIComponent(desc);
+            document.getElementById('edit-form-id').value = id;
+            document.getElementById('q-container').innerHTML = "";
+            JSON.parse(decodeURIComponent(qsJson)).forEach(q => addQ(q.text));
+            document.getElementById('form-mode-title').innerText = "تعديل بيانات التقديم";
+            window.scrollTo(0,0);
+        };
+
+        window.toggleStatus = (id, curr) => update(ref(db, `forms/${id}`), { isOpen: !curr });
+
+        function resetForm(type) {
+            document.getElementById(`${type}-title`).value = "";
+            if(document.getElementById(`${type}-desc`)) document.getElementById(`${type}-desc`).value = "";
+            if(document.getElementById(`${type}-content`)) document.getElementById(`${type}-content`).value = "";
+            document.getElementById(`edit-${type}-id`).value = "";
+            document.getElementById(`${type}-mode-title`).innerText = type === 'rule' ? "إضافة قانون جديد" : "نشر خبر جديد";
+        }
+
+        function renderAll() {
+            // جلب القوانين
+            onValue(ref(db, 'rules'), (snap) => {
+                let h = ""; snap.forEach(c => {
+                    const r = c.val();
+                    h += `<div class="admin-card flex justify-between items-center"><span>${r.title}</span><div class="flex gap-4"><i onclick="editRule('${c.key}','${r.title}','${encodeURIComponent(r.desc||'')}')" class="fas fa-edit btn-edit hover:text-blue-400"></i><i onclick="safeDelete('rules','${c.key}')" class="fas fa-trash btn-delete hover:text-red-400"></i></div></div>`;
+                });
+                document.getElementById('rules-list').innerHTML = h || "لا توجد قوانين مضافة";
+            });
+
+            // جلب الأخبار
+            onValue(ref(db, 'ads'), (snap) => {
+                let h = ""; snap.forEach(c => {
+                    const a = c.val();
+                    h += `<div class="admin-card flex justify-between items-center"><span>${a.title}</span><div class="flex gap-4"><i onclick="editAd('${c.key}','${a.title}','${encodeURIComponent(a.content||'')}')" class="fas fa-edit btn-edit hover:text-blue-400"></i><i onclick="safeDelete('ads','${c.key}')" class="fas fa-trash btn-delete hover:text-red-400"></i></div></div>`;
+                });
+                document.getElementById('ads-list').innerHTML = h || "لا توجد أخبار منشورة";
+            });
+
+            // جلب التقييمات
+            onValue(ref(db, 'ratings'), (snap) => {
+                let h = ""; snap.forEach(c => {
+                    const r = c.val();
+                    h += `<div class="admin-card"><div class="flex justify-between font-bold mb-2 text-orange-400"><span>${r.name}</span><span>${"⭐".repeat(r.stars)}</span></div><p class="text-xs text-zinc-500">${r.comment}</p><button onclick="safeDelete('ratings','${c.key}')" class="text-red-500 text-[10px] mt-4 underline">حذف هذا التقييم</button></div>`;
+                });
+                document.getElementById('rates-list').innerHTML = h || "لا توجد تقييمات بعد";
+            });
+
+            // جلب النماذج
+            onValue(ref(db, 'forms'), (snap) => {
+                let h = ""; snap.forEach(c => {
+                    const f = c.val();
+                    const color = f.isOpen ? 'bg-green-600' : 'bg-red-600';
+                    const qsJson = encodeURIComponent(JSON.stringify(f.questions || []));
+                    h += `<div class="admin-card"><div class="flex justify-between mb-4"><b>${f.name}</b><button onclick="toggleStatus('${c.key}', ${f.isOpen})" class="${color} px-3 py-1 rounded-full text-[10px] font-bold">${f.isOpen ? 'مفتوح' : 'مغلق'}</button></div><div class="flex justify-end gap-6 border-t border-zinc-800 pt-4"><i onclick="editForm('${c.key}','${f.name}','${encodeURIComponent(f.description||'')}','${qsJson}')" class="fas fa-edit btn-edit"></i><i onclick="safeDelete('forms','${c.key}')" class="fas fa-trash btn-delete"></i></div></div>`;
+                });
+                document.getElementById('forms-list').innerHTML = h || "لا توجد نماذج";
+            });
+
+            // جلب التقديمات (الطلبات الواردة)
+            onValue(ref(db, 'submissions'), (snap) => {
+                let h = ""; snap.forEach(c => {
+                    const v = c.val();
+                    let ans = ""; (v.answers||[]).forEach(a => ans += `<p class='text-xs text-zinc-400'>• ${a.question}: <span class="text-white">${a.answer}</span></p>`);
+                    h += `<div class="admin-card"><div class="text-orange-500 font-black mb-2">${v.formName}</div><div class="text-[11px] mb-3 text-zinc-500">اللاعب: ${v.roblox} | ديسكورد: ${v.discord}</div><div class="bg-black/40 p-3 rounded-lg">${ans}</div><button onclick="safeDelete('submissions','${c.key}')" class="text-red-500 text-[10px] mt-4 font-bold uppercase underline">حذف الطلب من السجل</button></div>`;
+                });
+                document.getElementById('subs-list').innerHTML = h || "صندوق الطلبات فارغ";
+            });
+        }
     </script>
 </body>
 </html>
