@@ -8,37 +8,39 @@
     <link href="https://fonts.googleapis.com/css2?family=Almarai:wght@400;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { font-family: 'Almarai', sans-serif; background-color: #0a0a0a; color: white; overflow-x: hidden; }
+        body { font-family: 'Almarai', sans-serif; background-color: #0a0a0a; color: white; scroll-behavior: smooth; }
         .accent-orange { background-color: #f37021; }
         #sidebar { transition: 0.3s ease-in-out; z-index: 1000; }
-        .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 999; }
+        .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 999; }
     </style>
 </head>
 <body>
+
     <nav class="p-6 flex justify-between items-center max-w-7xl mx-auto">
-        <div class="text-2xl font-black text-orange-500">TRICKSTER</div>
+        <div class="text-2xl font-black text-orange-500 uppercase">TRICKSTER</div>
         <button onclick="toggleSidebar()" class="text-2xl text-white"><i class="fas fa-bars"></i></button>
     </nav>
 
     <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
-    <div id="sidebar" class="fixed top-0 right-0 h-full w-64 bg-[#111] translate-x-full p-8 border-r border-zinc-800 shadow-2xl">
+    <div id="sidebar" class="fixed top-0 right-0 h-full w-72 bg-[#0d0d0d] translate-x-full p-8 border-l border-zinc-800 shadow-2xl">
         <button onclick="toggleSidebar()" class="text-orange-500 mb-10 text-xl"><i class="fas fa-times"></i></button>
         <div class="flex flex-col gap-6">
             <a href="index.html" class="text-lg font-bold hover:text-orange-500 transition"><i class="fas fa-home ml-2"></i> الرئيسية</a>
+            <a href="news.html" class="text-lg font-bold hover:text-orange-500 transition"><i class="fas fa-bullhorn ml-2"></i> آخر الأخبار</a>
             <a href="rules.html" class="text-lg font-bold hover:text-orange-500 transition"><i class="fas fa-shield-alt ml-2"></i> القوانين</a>
             <a href="apply.html" class="text-lg font-bold hover:text-orange-500 transition"><i class="fas fa-file-signature ml-2"></i> التقديمات</a>
-            <a href="admin.html" class="text-lg font-bold hover:text-zinc-400 border-t border-zinc-800 pt-6 text-zinc-500 transition"><i class="fas fa-user-shield ml-2"></i> لوحة التحكم</a>
+            <a href="ratings.html" class="text-lg font-bold hover:text-orange-500 transition"><i class="fas fa-star ml-2"></i> قيم الموقع</a>
+            <a href="admin.html" class="text-lg font-bold text-zinc-600 border-t border-zinc-800 pt-6 hover:text-white transition"><i class="fas fa-user-shield ml-2"></i> لوحة التحكم</a>
         </div>
     </div>
 
-    <section class="min-h-[70vh] flex flex-col justify-center items-center text-center px-6">
+    <section class="min-h-[80vh] flex flex-col justify-center items-center text-center px-6">
         <h1 class="text-6xl md:text-8xl font-black mb-8 tracking-tighter uppercase">TRICKSTER</h1>
-        <p class="max-w-2xl text-gray-400 leading-loose mb-10 text-lg">مرحبا بك في منصة عصابة التريكستر الرسمية .
-هدفنا من هذه المنصة تقديم خدمات تصنع لك رحلة فريدة في عصابة التريكستر ..
-        </p>
-        <a href="https://discord.gg/6aGGPmscBv" target="_blank" class="accent-orange text-white px-12 py-4 rounded-xl font-bold shadow-lg shadow-orange-500/20 hover:scale-105 transition-transform duration-200">
-            انضم إلينا
-        </a>
+        <p class="max-w-2xl text-gray-400 leading-loose mb-10 text-lg">مرحبا بك في منصة عصابة التريكستر الرسمية. هدفنا تقديم خدمات تصنع لك رحلة فريدة.</p>
+        <div class="flex flex-wrap justify-center gap-4">
+            <a href="https://discord.gg/6aGGPmscBv" target="_blank" class="accent-orange text-white px-12 py-4 rounded-xl font-bold shadow-lg shadow-orange-500/20 hover:scale-105 transition">انضم إلينا</a>
+            <a href="news.html" class="bg-zinc-900 text-white px-12 py-4 rounded-xl font-bold border border-zinc-800 hover:bg-zinc-800 transition">آخر الأخبار</a>
+        </div>
     </section>
 
     <script>
@@ -51,4 +53,3 @@
     </script>
 </body>
 </html>
-
